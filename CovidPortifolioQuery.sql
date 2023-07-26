@@ -1,39 +1,47 @@
---Select *
---from PortfolioProjects..CovidDeaths$
---order by 3,4
+--Covid 19 Data Exploration 
+Select *
+from PortfolioProjects..CovidDeaths$
+order by 3,4
 
---Select *
---from PortfolioProjects..CovidVaccinations$
---order by 3,4
+Select *
+from PortfolioProjects..CovidVaccinations$
+order by 3,4
 
---select location, date, total_cases, total_deaths,(total_deaths/total_cases)*100 as DeathPercentage
---from PortfolioProjects..CovidDeaths$
---where location like '%states%'
---order by 1,2
+-- Shows likelihood of dying if you contract covid in your country
+	
+select location, date, total_cases, total_deaths,(total_deaths/total_cases)*100 as DeathPercentage
+from PortfolioProjects..CovidDeaths$
+where location like '%south africa%'
+order by 1,2
 
 select location, date, population, total_cases,(total_cases/population)*100 as DeathPercentage
 from PortfolioProjects..CovidDeaths$
-where location like '%states%'
+where location like '%south africa%'
 order by 1,2
 
+-- Countries with Highest Infection Rate compared to Population
+	
 select location, population, MAX(total_cases)as HighestInfectiolnCount,MAX((total_cases/population))*100 as PercentagePopulationInfected
 from PortfolioProjects..CovidDeaths$
---where location like '%states%'
+--where location like '%south africa%'
 Group by location, population
 order by PercentagePopulationInfected desc
-
+	
+-- Countries with Highest Death Count per Population
+	
 Select Location, Max(cast(Total_deaths as int)) as TotalDeathsCount
 From PortfolioProjects..CovidDeaths$
 Where continent is not null
 Group by Location
 Order by TotalDeathsCount desc
 
+-- Showing contintents with the highest death count per population
+	
 Select continent, Max(cast(Total_deaths as int)) as TotalDeathsCount
 From PortfolioProjects..CovidDeaths$
 Where continent is not null
 Group by continent
 Order by TotalDeathsCount desc
-
 
 Select Location, Max(cast(Total_deaths as int)) as TotalDeathsCount
 From PortfolioProjects..CovidDeaths$
@@ -47,6 +55,8 @@ Where continent is not null
 --Group by Location
 Order by 1,2
 
+-- Shows Percentage of Population that has recieved at least one Covid Vaccine
+	
 Select dea.continent, dea.Location, dea.population, vac.new_vaccinations
 From PortfolioProjects..CovidDeaths$ dea
 Join PortfolioProjects..CovidVaccinations$ vac
@@ -74,6 +84,8 @@ Join PortfolioProjects..CovidVaccinations$ vac
 Where dea.continent is not null
 Order by 2,3
 
+-- Using CTE
+	
 With PopvsVac (Continent, Location, Population, Date, New_Vaccinations, RollingPeopleVaccinated)
 as
 (
@@ -90,6 +102,8 @@ Where dea.continent is not null
 Select *,(RollingPeopleVaccinated/population)*100
 From PopvsVac
 
+-- Using Temp Table to perform Calculation on Partition By in previous query
+	
 Create Table #PercentPopulationVaccinated
 (
 Continent nvarchar(255),
@@ -136,6 +150,8 @@ Join PortfolioProjects..CovidVaccinations$ vac
 Select *,(RollingPeopleVaccinated/population)*100
 From #PercentPopulationVaccinated
 
+-- Creating View to store data for later visualizations
+	
 Create View PercentPopulationVaccinated as
 Select dea.continent, dea.Location, dea.population, dea.date, vac.new_vaccinations
 , SUM(CONVERT(int,vac.new_vaccinations)) OVER (Partition by dea.Location Order by dea.Location, dea.date ) as RollingPeopleVaccinated
